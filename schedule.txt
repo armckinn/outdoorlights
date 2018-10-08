@@ -1,0 +1,17 @@
+# Normal days: white on until Bedtime then dimmed
+*     sunset  white-fade-up
+*     10:00   white-dim
+*     sunrise white-dim-fade-down
+
+# Alexander's Birthday
+9/4   8:00    alexander-bday
+9/4   10:00   white-dim
+
+# Christmas Season - active until bedtime then no changing
+12/4  sunset  christmas-on
+12/4  10:00   christmas-static
+
+# New Years!
+12/31 sunset  new-years-start
+12/31 11:55   new-years
+1/1   01:00   white-dim
