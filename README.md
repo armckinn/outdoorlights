@@ -1,2 +1,2 @@
 # outdoorlights
-The Outdoor Light Project
+The McKinney Outdoor Light Project
