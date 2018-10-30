@@ -1,19 +1,18 @@
 #!/usr/bin/env python
 
 
-# Fade up to Orange and hold there.
+# Fade up to white and hold there.
 
 from array import array
 from ola.ClientWrapper import ClientWrapper
 from ola.DMXConstants import DMX_MIN_SLOT_VALUE, DMX_MAX_SLOT_VALUE,  DMX_UNIVERSE_SIZE
 import math
-import time
-
+import datetime
 
 __author__ = 'Alexander McKinney'
 
 """
-Fade up to Orange on tree lights.
+Fade up to White on tree lights.
 """
 
 
@@ -21,8 +20,7 @@ UPDATE_INTERVAL = 25  # In ms, this comes about to ~40 frames a second
 FINISH_TIME = 10000    # In ms, when the fade should be done.
 DMX_DATA_SIZE = 100
 UNIVERSE = 1
-R_TREE_LIGHTS_CH = [1, 5, 9, 13, 17, 101, 105, 109, 113, 117]
-G_TREE_LIGHTS_CH = [2, 6, 10, 14, 18, 102, 106, 110, 114, 118]
+TREE_LIGHTS_CH = [4, 8, 12, 16, 20, 104, 108, 112, 116, 120]
 
 class LinearFade(object):
     def __init__(self, lights, start_value, end_value, num_steps):
@@ -48,6 +46,18 @@ class LinearFade(object):
                 data[light-1] = int(self._end_value + 2**((self._num_steps - cur_step) / self._R) - 1);
             #data[light-1] = int((self._end_value - self._start_value)*1.0/steps * cur_step)
 
+class Hold(object):
+    def __init__(self, lights, value):
+        self._lights = lights
+        self._value = value
+
+    def UpdateLights(self, data, cur_step):
+        """
+        This function gets called periodically based on UPDATE_INTERVAL
+        """
+        for light in self._lights:
+            data[light-1] = self._value
+
 
 class DMXUpdater(object):
   def __init__(self, universe, update_interval, client_wrapper,
@@ -61,7 +71,6 @@ class DMXUpdater(object):
     self._wrapper = client_wrapper
     self._client = client_wrapper.Client()
     self._wrapper.AddEvent(self._update_interval, self.UpdateDmx)
-    print len(self._data)
 
   def UpdateDmx(self):
     """
@@ -82,22 +91,12 @@ class DMXUpdater(object):
 
 
 if __name__ == '__main__':
-    # Setup to Faders.
-    r_fader_up = LinearFade(R_TREE_LIGHTS_CH, 50, 200, FINISH_TIME/UPDATE_INTERVAL)
-    g_fader_up = LinearFade(G_TREE_LIGHTS_CH, 25, 129, FINISH_TIME/UPDATE_INTERVAL)
-    progs_up = [ r_fader_up, g_fader_up ]
-    r_fader_down = LinearFade(R_TREE_LIGHTS_CH, 200, 50, FINISH_TIME/UPDATE_INTERVAL)
-    g_fader_down = LinearFade(G_TREE_LIGHTS_CH, 129, 25, FINISH_TIME/UPDATE_INTERVAL)
-    progs_down = [ r_fader_down, g_fader_down ]
+    hold = Hold(TREE_LIGHTS_CH, 0)
 
     wrapper = ClientWrapper()
-    while True:
-        controller = DMXUpdater(UNIVERSE, UPDATE_INTERVAL, wrapper, progs_up, FINISH_TIME/UPDATE_INTERVAL)
-        wrapper.Run()
 
-        time.sleep(2)
-
-        controller = DMXUpdater(UNIVERSE, UPDATE_INTERVAL, wrapper, progs_down, FINISH_TIME/UPDATE_INTERVAL)
-        wrapper.Run()
+    print "%s: Hold" % (str(datetime.datetime.now()))
+    controller = DMXUpdater(UNIVERSE, UPDATE_INTERVAL, wrapper, [ hold ], 1000/UPDATE_INTERVAL)
+    wrapper.Run()
 
     print "Done"

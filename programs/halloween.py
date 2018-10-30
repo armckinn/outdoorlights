@@ -8,7 +8,7 @@ from ola.ClientWrapper import ClientWrapper
 from ola.DMXConstants import DMX_MIN_SLOT_VALUE, DMX_MAX_SLOT_VALUE,  DMX_UNIVERSE_SIZE
 import math
 import time
-
+import random
 
 __author__ = 'Alexander McKinney'
 
@@ -18,7 +18,7 @@ Fade up to Orange on tree lights.
 
 
 UPDATE_INTERVAL = 25  # In ms, this comes about to ~40 frames a second
-FINISH_TIME = 10000    # In ms, when the fade should be done.
+FINISH_TIME = 1000    # In ms, when the fade should be done.
 DMX_DATA_SIZE = 100
 UNIVERSE = 1
 R_TREE_LIGHTS_CH = [1, 5, 9, 13, 17, 101, 105, 109, 113, 117]
@@ -47,6 +47,55 @@ class LinearFade(object):
             else:
                 data[light-1] = int(self._end_value + 2**((self._num_steps - cur_step) / self._R) - 1);
             #data[light-1] = int((self._end_value - self._start_value)*1.0/steps * cur_step)
+
+class RandomBreath(object):
+    def __init__(self, lights, low, high):
+        self._lights = lights
+        self._low = low
+        self._high = high
+        NewBreath()
+
+    def NewBreath(self)
+        # Calculate a random duration.
+        self._up_dir = True
+        self._num_steps = random.randint(500/UPDATE_INTERVAL, 5000/UPDATE_INTERVAL)
+        self._cur_step = 0
+        self._R = (self._num_steps * math.log10(2))/(math.log10(abs(self._high-self._low)));
+
+    def UpdateLights(self, data, cur_step):
+        """
+        This function gets called periodically based on UPDATE_INTERVAL
+        """
+        for light in self._lights:
+            data[light-1] = int(self.low_value + 2**(self._cur_step / self._R) - 1);
+        if self._up_dir:
+            self._cur_step += 1
+            if self._cur_step >= self._num_steps:
+                self._up_dir = False
+        else:
+            self._cur_step -= 1
+            if self._cur_step <= 0:
+                NewBreath()
+
+    def GetLights(self):
+        return self._lights
+
+
+class CopyFader(object):
+    """
+    This class is a fader tha follows another fader. The 2 faders need to be
+    the same length.
+    """
+    def __init__(self, lights, fader, scale):
+        self._lights = lights
+        self._fader = fader
+        self._scale = scale
+
+    def UpdateLights(self, data, cur_step):
+        # This fader just copies the specified fader and applies the multiplier to each value.
+        lights = self._fader.GetLights()
+        for light in self._lights:
+            data[light-1] = lights[light-1] * self._scale
 
 
 class DMXUpdater(object):
@@ -83,21 +132,14 @@ class DMXUpdater(object):
 
 if __name__ == '__main__':
     # Setup to Faders.
-    r_fader_up = LinearFade(R_TREE_LIGHTS_CH, 50, 200, FINISH_TIME/UPDATE_INTERVAL)
-    g_fader_up = LinearFade(G_TREE_LIGHTS_CH, 25, 129, FINISH_TIME/UPDATE_INTERVAL)
-    progs_up = [ r_fader_up, g_fader_up ]
-    r_fader_down = LinearFade(R_TREE_LIGHTS_CH, 200, 50, FINISH_TIME/UPDATE_INTERVAL)
-    g_fader_down = LinearFade(G_TREE_LIGHTS_CH, 129, 25, FINISH_TIME/UPDATE_INTERVAL)
-    progs_down = [ r_fader_down, g_fader_down ]
+    for r_light,g_light in zip(R_TREE_LIGHTS_CH, G_TREE_LIGHTS_CH):
+        r_fader = RandomBreath(r_light, 10, 165)
+        g_fader = CopyFader(g_light, r_fader, 0.5)
+        faders.append(r_fader, g_fader)
 
     wrapper = ClientWrapper()
     while True:
-        controller = DMXUpdater(UNIVERSE, UPDATE_INTERVAL, wrapper, progs_up, FINISH_TIME/UPDATE_INTERVAL)
-        wrapper.Run()
-
-        time.sleep(2)
-
-        controller = DMXUpdater(UNIVERSE, UPDATE_INTERVAL, wrapper, progs_down, FINISH_TIME/UPDATE_INTERVAL)
+        controller = DMXUpdater(UNIVERSE, UPDATE_INTERVAL, wrapper, faders, FINISH_TIME/UPDATE_INTERVAL)
         wrapper.Run()
 
     print "Done"

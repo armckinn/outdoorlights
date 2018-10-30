@@ -7,7 +7,11 @@ from array import array
 from ola.ClientWrapper import ClientWrapper
 from ola.DMXConstants import DMX_MIN_SLOT_VALUE, DMX_MAX_SLOT_VALUE,  DMX_UNIVERSE_SIZE
 import math
+<<<<<<< HEAD
 import time
+=======
+import datetime
+>>>>>>> ae92852cc388b3ad29fbd4395f547f67a853193e
 
 __author__ = 'Alexander McKinney'
 
@@ -91,19 +95,37 @@ class DMXUpdater(object):
 
 
 if __name__ == '__main__':
+<<<<<<< HEAD
     fader_up = LinearFade(TREE_LIGHTS_CH, 10, 255, FINISH_TIME/UPDATE_INTERVAL)
     progs_up = [ fader_up ]
     hold = Hold(TREE_LIGHTS_CH, 255)
     fader_down = LinearFade(TREE_LIGHTS_CH, 255, 10, FINISH_TIME/UPDATE_INTERVAL)
     progs_down = [ fader_down ]
 
+=======
+    fader_up = LinearFade(TREE_LIGHTS_CH, 10, 180, FINISH_TIME/UPDATE_INTERVAL)
+    progs_up = [ fader_up ]
+    hold = Hold(TREE_LIGHTS_CH, 180)
+    fader_down = LinearFade(TREE_LIGHTS_CH, 180, 0, FINISH_TIME/UPDATE_INTERVAL)
+    progs_down = [ fader_down ]
+
+    print "%s: Ramp up" % (str(datetime.datetime.now()))
+>>>>>>> ae92852cc388b3ad29fbd4395f547f67a853193e
     wrapper = ClientWrapper()
     controller = DMXUpdater(UNIVERSE, UPDATE_INTERVAL, wrapper, progs_up, FINISH_TIME/UPDATE_INTERVAL)
     wrapper.Run()
 
+<<<<<<< HEAD
     controller = DMXUpdater(UNIVERSE, UPDATE_INTERVAL, wrapper, [ hold ], 7*60*60)
     wrapper.Run()
 
+=======
+    print "%s: Hold" % (str(datetime.datetime.now()))
+    controller = DMXUpdater(UNIVERSE, UPDATE_INTERVAL, wrapper, [ hold ], 7*60*60*1000/UPDATE_INTERVAL)
+    wrapper.Run()
+
+    print "%s: Ramp down" % (str(datetime.datetime.now()))
+>>>>>>> ae92852cc388b3ad29fbd4395f547f67a853193e
     controller = DMXUpdater(UNIVERSE, UPDATE_INTERVAL, wrapper, progs_down, FINISH_TIME/UPDATE_INTERVAL)
     wrapper.Run()
 
