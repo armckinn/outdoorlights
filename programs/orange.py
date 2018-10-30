@@ -9,6 +9,7 @@ from ola.DMXConstants import DMX_MIN_SLOT_VALUE, DMX_MAX_SLOT_VALUE,  DMX_UNIVER
 import math
 import time
 
+
 __author__ = 'Alexander McKinney'
 
 """
