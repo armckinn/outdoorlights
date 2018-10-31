@@ -53,21 +53,22 @@ class RandomBreath(object):
         self._lights = lights
         self._low = low
         self._high = high
-        NewBreath()
+        self.NewBreath()
 
-    def NewBreath(self)
+    def NewBreath(self):
         # Calculate a random duration.
         self._up_dir = True
-        self._num_steps = random.randint(500/UPDATE_INTERVAL, 5000/UPDATE_INTERVAL)
+        self._num_steps = random.randint(1000/UPDATE_INTERVAL, 15000/UPDATE_INTERVAL)
         self._cur_step = 0
         self._R = (self._num_steps * math.log10(2))/(math.log10(abs(self._high-self._low)));
+        print "New fader: steps: %d between %d and %d" % (self._num_steps, self._low, self._high)
 
     def UpdateLights(self, data, cur_step):
         """
         This function gets called periodically based on UPDATE_INTERVAL
         """
         for light in self._lights:
-            data[light-1] = int(self.low_value + 2**(self._cur_step / self._R) - 1);
+            data[light-1] = int(self._low + 2**(self._cur_step / self._R) - 1);
         if self._up_dir:
             self._cur_step += 1
             if self._cur_step >= self._num_steps:
@@ -75,7 +76,7 @@ class RandomBreath(object):
         else:
             self._cur_step -= 1
             if self._cur_step <= 0:
-                NewBreath()
+                self.NewBreath()
 
     def GetLights(self):
         return self._lights
@@ -83,7 +84,7 @@ class RandomBreath(object):
 
 class CopyFader(object):
     """
-    This class is a fader tha follows another fader. The 2 faders need to be
+    This class is a fader that follows another fader. The 2 faders need to be
     the same length.
     """
     def __init__(self, lights, fader, scale):
@@ -94,8 +95,12 @@ class CopyFader(object):
     def UpdateLights(self, data, cur_step):
         # This fader just copies the specified fader and applies the multiplier to each value.
         lights = self._fader.GetLights()
+        #print lights
+        #print data
         for light in self._lights:
-            data[light-1] = lights[light-1] * self._scale
+            #print "%d ->%d" % (data[lights[0]-1], int(data[lights[0]-1] * self._scale))
+            data[light-1] = int(data[lights[0]-1] * self._scale)
+            lights = lights[1:]
 
 
 class DMXUpdater(object):
@@ -132,10 +137,12 @@ class DMXUpdater(object):
 
 if __name__ == '__main__':
     # Setup to Faders.
+    faders = []
     for r_light,g_light in zip(R_TREE_LIGHTS_CH, G_TREE_LIGHTS_CH):
-        r_fader = RandomBreath(r_light, 10, 165)
-        g_fader = CopyFader(g_light, r_fader, 0.5)
-        faders.append(r_fader, g_fader)
+        r_fader = RandomBreath([r_light], 30, 165)
+        g_fader = CopyFader([g_light], r_fader, 0.645)
+        faders.append(r_fader)
+        faders.append(g_fader)
 
     wrapper = ClientWrapper()
     while True:
